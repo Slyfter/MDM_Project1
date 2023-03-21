@@ -4,7 +4,7 @@ import urllib.request
 import numpy as np
 from flask import Flask, request, jsonify, send_file
 import matplotlib.pyplot as plt
-import io
+from io import BytesIO
 import base64
 
 app = Flask(__name__)
