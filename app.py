@@ -1,13 +1,23 @@
 import cv2
 import torch
 import urllib.request
-
+import numpy as np
+from flask import Flask, request, jsonify, send_file
 import matplotlib.pyplot as plt
+import io
+import base64
+
+app = Flask(__name__)
 
 # Download an image from the PyTorch homepage
 
-url, filename = ("https://github.com/pytorch/hub/raw/master/images/dog.jpg", "dog.jpg")
-urllib.request.urlretrieve(url, filename)
+#url, filename = ("https://github.com/pytorch/hub/raw/master/images/dog.jpg", "dog.jpg")
+#urllib.request.urlretrieve(url, filename)
+
+
+@app.route("/")
+def indexPage():
+    return send_file("frontend/index.html")
 
 # Load a model
 
@@ -21,36 +31,66 @@ device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cp
 midas.to(device)
 midas.eval()
 
-# Load transforms to resize and normalize the image for large or small model
 
-midas_transforms = torch.hub.load("intel-isl/MiDaS", "transforms")
 
-if model_type == "DPT_Large" or model_type == "DPT_Hybrid":
-    transform = midas_transforms.dpt_transform
-else:
-    transform = midas_transforms.small_transform
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+         # Get the uploaded file
+        filename = request.files['file']
 
-# Load image and apply transforms
+        # Load transforms to resize and normalize the image for large or small model
+        midas_transforms = torch.hub.load("intel-isl/MiDaS", "transforms")
 
-img = cv2.imread(filename)
-img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        if model_type == "DPT_Large" or model_type == "DPT_Hybrid":
+            transform = midas_transforms.dpt_transform
+        else:
+            transform = midas_transforms.small_transform
 
-input_batch = transform(img).to(device)
+        # Load image and apply transforms
 
-# Predict and resize to original resolution
+        img = cv2.imdecode(np.fromstring(filename.read(), np.uint8), cv2.IMREAD_UNCHANGED)
 
-with torch.no_grad():
-    prediction = midas(input_batch)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    prediction = torch.nn.functional.interpolate(
-        prediction.unsqueeze(1),
-        size=img.shape[:2],
-        mode="bicubic",
-        align_corners=False,
-    ).squeeze()
+        input_batch = transform(img).to(device)
 
-output = prediction.cpu().numpy()
+        # Predict and resize to original resolution
 
-# Show result
-plt.imshow(output)
-plt.show()
+        with torch.no_grad():
+            prediction = midas(input_batch)
+
+            prediction = torch.nn.functional.interpolate(
+                prediction.unsqueeze(1),
+                size=img.shape[:2],
+                mode="bicubic",
+                align_corners=False,
+            ).squeeze()
+
+        output = prediction.cpu().numpy()
+
+        # Show result
+        fig, ax = plt.subplots()
+        ax.imshow(output)
+        
+        # Convert plot to Base64 encoded image
+        buffer = BytesIO()
+        fig.savefig(buffer, format='png')
+        buffer.seek(0)
+        image_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+        # Close plot
+        plt.close()
+
+        # Return Base64 encoded image
+        return f'<img src="data:image/png;base64,{image_base64}"/>'
+    
+    except Exception as e:
+        return f'Error: {str(e)}'
+    
+def fig_to_base64():
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    string = base64.b64encode(buf.read())
+    return f'<img src="data:image/png;base64,{string.decode("utf-8")}" alt="plot">'
