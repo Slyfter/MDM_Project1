@@ -9,12 +9,6 @@ import base64
 
 app = Flask(__name__)
 
-# Download an image from the PyTorch homepage
-
-#url, filename = ("https://github.com/pytorch/hub/raw/master/images/dog.jpg", "dog.jpg")
-#urllib.request.urlretrieve(url, filename)
-
-
 @app.route("/")
 def indexPage():
     return send_file("frontend/index.html")
