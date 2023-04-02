@@ -8,6 +8,9 @@
         border: 3px solid olive;
         padding: 30px;
       }
+      #plot-container {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -26,35 +29,33 @@
       </div>
     </div>
 
-    <div class="container mt-5 custom-container">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <h1 class="text-center mb-5">Predicted Image</h1>
-                <div id="plot"></div>
-            </div>
+    <div class="container mt-5 custom-container" id="plot-container">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <h1 class="text-center mb-5">Predicted Image</h1>
+          <div id="plot"></div>
         </div>
+      </div>
     </div>
-    
-
 
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script>
-        const form = document.querySelector('form');
-        form.addEventListener('submit', (event) => {
-            event.preventDefault();
-            const formData = new FormData(form);
-            axios.post('/predict', formData)
-            .then((response) => {
-                document.getElementById('plot').innerHTML = response.data;
-            })
-            .catch((error) => {
-                console.log(error);
-            });
-        });
+      const form = document.querySelector('form');
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const formData = new FormData(form);
+        axios.post('/predict', formData)
+          .then((response) => {
+            document.getElementById('plot-container').style.display = 'block';
+            document.getElementById('plot').innerHTML = response.data;
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      });
     </script>
-    
   </body>
 </html>

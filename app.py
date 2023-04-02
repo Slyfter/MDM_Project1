@@ -1,7 +1,7 @@
 import io
 import torch
 import numpy as np
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, send_file
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
