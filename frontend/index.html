@@ -37,7 +37,7 @@
         <div class="col-md-6">
           <h2 class="text-center mb-5">Upload Image or Use Camera</h2>
 
-          <!-- Dropdown for selecting upload method -->
+          <!-- Dropdown -->
           <div class="form-group">
             <label for="upload-method">Select upload method:</label>
             <select class="form-control" id="upload-method">
@@ -69,7 +69,7 @@
         </div>
       </div>
     </div>
-
+    <!-- Predicted Image container -->
     <div class="container mt-5 custom-container" id="plot-container">
       <div class="row justify-content-center">
         <div class="col-md-6">
@@ -79,6 +79,7 @@
       </div>
     </div>
 
+    <!-- Prediciton in progress container -->
     <div class="container mt-5 custom-container" id="loading">
       <div class="row justify-content-center">
         <div class="col-md-6 text-center">
@@ -87,10 +88,13 @@
       </div>
     </div>
     
+    <!-- Import von Bibiliotheken -->
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <!-- Script -->
     <script>
       const form = document.querySelector('form');
       const uploadContainer = document.getElementById('upload-container');
@@ -101,11 +105,11 @@
       const context = canvas.getContext('2d');
       const loadingContainer = document.getElementById('loading');
 
-      // Hide cameraContainer by default and show uploadContainer
+      // Defaulteinstellungen für Containersichtbarkeiten
       uploadContainer.style.display = 'block';
       cameraContainer.style.display = 'none';
 
-      // Listen for selection change and toggle containers
+      // Dropdown change event
       document.getElementById('upload-method').addEventListener('change', () => {
         const value = document.getElementById('upload-method').value;
 
@@ -118,7 +122,7 @@
           cameraContainer.style.display = 'block';
           snapButton.disabled = false;
 
-          // Access camera and show video stream
+          // Auf Kameras zugreifen und Video streamen
           if (navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true })
               .then((stream) => {
@@ -131,13 +135,13 @@
         }
       });
 
-      // Camera functionality
+      // Kamera Bild aufnehmen und an Server senden
       snapButton.addEventListener('click', () => {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Convert canvas to blob and submit to server
+        // Von Canvas zu Blob konvertieren und an Server senden
         canvas.toBlob((blob) => {
           const formData = new FormData();
           formData.append('file', blob, 'camera.jpg');
@@ -155,7 +159,7 @@
         }, 'image/jpeg', 0.95);
       });
 
-      // Upload an image file
+      // Hochladen von Bilderdatei
       form.addEventListener('submit', (event) => {
         event.preventDefault();
         loadingContainer.style.display = 'block';
