@@ -5,7 +5,7 @@ Dieses Projekt beinhaltet die Codebasis für eine simple Flask Webapplikation in
 Der User hat die Möglichkeit, entweder ein bestehendes Bild hochzuladen oder ein neues Bild mit der Kamera zu erstellen und hochzuladen. Das Modell von Intel wird verwendet, um eine Schätzung der relativen Tiefenverhältnisse in dem Bild zu erstellen. Das Ergebnis wird dann im Frontend der Webapplikation präsentiert.
 
 # Installation
-  1. Klone das Repository: git clone https://github.com/slyfter/MDM_Project1.git
+  1. Klone das Repository: git clone https://github.com/Slyfter/MDM_Project1.git
   2. Navigiere in den Ordner: cd MDM_Project1
   3. Installiere die Abhängigkeiten: pip install -r requirements.txt
   4. Starte die Applikation: python app.py
