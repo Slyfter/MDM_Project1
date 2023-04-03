@@ -7,24 +7,65 @@
       .custom-container {
         border: 3px solid olive;
         padding: 30px;
+        background-color: rgb(236, 236, 236);
       }
+      
+      #title-container {
+        background-color: rgb(236, 236, 236);
+        border: 3px solid olive;
+        padding: 20px;
+        text-align: center;
+      }
+
       #plot-container {
         display: none;
       }
+
+      h1 {
+        color: olive;
+      }
+
     </style>
   </head>
   <body>
+    <div class="container mt-5 custom-container" id="title-container">
+      <h1>MiDaS - Relative inverse depths predictions</h1>
+    </div>
+
     <div class="container mt-5 custom-container">
       <div class="row justify-content-center">
         <div class="col-md-6">
-          <h1 class="text-center mb-5">Upload Image</h1>
-          <form action="/predict" method="post" enctype="multipart/form-data">
-            <div class="form-group">
-              <label for="image">Choose an image file to upload:</label>
-              <input type="file" class="form-control-file" id="image" name="file" accept="image/*">
+          <h2 class="text-center mb-5">Upload Image or Use Camera</h2>
+
+          <!-- Dropdown for selecting upload method -->
+          <div class="form-group">
+            <label for="upload-method">Select upload method:</label>
+            <select class="form-control" id="upload-method">
+              <option value="upload">Upload Image</option>
+              <option value="camera">Camera</option>
+            </select>
+          </div>
+
+          <!-- Upload Image container -->
+          <div class="container mt-3 custom-container" id="upload-container">
+            <form action="/predict" method="post" enctype="multipart/form-data">
+              <div class="form-group">
+                <label for="image">Choose an image file to upload:</label>
+                <input type="file" class="form-control-file" id="image" name="file" accept="image/*">
+              </div>
+              <button type="submit" class="btn btn-primary mt-3">Upload Image</button>
+            </form>
+          </div>
+
+          <!-- Camera container -->
+          <div class="container mt-3 custom-container" id="camera-container">
+            <div class="d-flex justify-content-center mb-3">
+              <button type="button" class="btn btn-primary" id="snap" disabled>Take Picture</button>
             </div>
-            <button type="submit" class="btn btn-primary mt-3">Upload Image</button>
-          </form>
+            <div class="d-flex justify-content-center">
+              <video id="video" width="320" height="240" autoplay></video>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -32,28 +73,105 @@
     <div class="container mt-5 custom-container" id="plot-container">
       <div class="row justify-content-center">
         <div class="col-md-6">
-          <h1 class="text-center mb-5">Predicted Image</h1>
+          <h2 class="text-center mb-5">Predicted Image</h2>
           <div id="plot"></div>
         </div>
       </div>
     </div>
 
+    <div class="container mt-5 custom-container" id="loading">
+      <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+          <h3>Prediction in progress...</h3>
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script>
       const form = document.querySelector('form');
+      const uploadContainer = document.getElementById('upload-container');
+      const cameraContainer = document.getElementById('camera-container');
+      const snapButton = document.getElementById('snap');
+      const video = document.getElementById('video');
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      const loadingContainer = document.getElementById('loading');
+
+      // Hide cameraContainer by default and show uploadContainer
+      uploadContainer.style.display = 'block';
+      cameraContainer.style.display = 'none';
+
+      // Listen for selection change and toggle containers
+      document.getElementById('upload-method').addEventListener('change', () => {
+        const value = document.getElementById('upload-method').value;
+
+        if (value === 'upload') {
+          uploadContainer.style.display = 'block';
+          cameraContainer.style.display = 'none';
+          snapButton.disabled = true;
+        } else if (value === 'camera') {
+          uploadContainer.style.display = 'none';
+          cameraContainer.style.display = 'block';
+          snapButton.disabled = false;
+
+          // Access camera and show video stream
+          if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+              .then((stream) => {
+                video.srcObject = stream;
+              })
+              .catch((error) => {
+                console.log(error);
+              });
+          }
+        }
+      });
+
+      // Camera functionality
+      snapButton.addEventListener('click', () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert canvas to blob and submit to server
+        canvas.toBlob((blob) => {
+          const formData = new FormData();
+          formData.append('file', blob, 'camera.jpg');
+
+          axios.post('/predict', formData)
+            .then((response) => {
+              document.getElementById('plot-container').style.display = 'block';
+              document.getElementById('plot').innerHTML = response.data;
+              loadingContainer.style.display = 'none';
+            })
+            .catch((error) => {
+              console.log(error);
+              loadingContainer.style.display = 'none';
+            });
+        }, 'image/jpeg', 0.95);
+      });
+
+      // Upload an image file
       form.addEventListener('submit', (event) => {
         event.preventDefault();
+        loadingContainer.style.display = 'block';
         const formData = new FormData(form);
         axios.post('/predict', formData)
           .then((response) => {
             document.getElementById('plot-container').style.display = 'block';
             document.getElementById('plot').innerHTML = response.data;
+            loadingContainer.style.display = 'none';
           })
           .catch((error) => {
             console.log(error);
+            loadingContainer.style.display = 'none';
           });
       });
     </script>
